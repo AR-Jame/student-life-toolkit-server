@@ -18,7 +18,6 @@ const subjectSchema = new Schema({
     },
 })
 
-
 const scheduleSchema = new Schema({
     subjectId: {
         type: Schema.ObjectId,
@@ -50,6 +49,9 @@ const scheduleSchema = new Schema({
     notes: {
         type: String,
     },
+    instructor: {
+        type: String,
+    }
 }, {
     versionKey: false,
     timestamps: true
