@@ -7,7 +7,11 @@ dotenv.config();
 const envSchema = z.object({
     PORT: z.string(),
     NODE_ENV: z.enum(["production", "development"]),
-    DB_URL: z.url()
+    DB_URL: z.url(),
+    JWT_ACCESS_SECRET: z.string(),
+    JWT_ACCESS_EXPIRES: z.string(),
+    JWT_REFRESH_SECRET: z.string(),
+    JWT_REFRESH_EXPIRES: z.string(),
 })
 
 const parsed = envSchema.safeParse(process.env);
