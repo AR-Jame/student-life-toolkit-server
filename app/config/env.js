@@ -12,6 +12,7 @@ const envSchema = z.object({
     JWT_ACCESS_EXPIRES: z.string(),
     JWT_REFRESH_SECRET: z.string(),
     JWT_REFRESH_EXPIRES: z.string(),
+    FRONTEND_URL: z.url()
 })
 
 const parsed = envSchema.safeParse(process.env);

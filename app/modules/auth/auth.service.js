@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import AppError from "../../errorHelper/AppError.js";
 import { generateToken } from "../../utils/jwt.js";
 import { User } from "../user/user.model.js";
 import bcrypt from "bcryptjs";
@@ -22,9 +23,6 @@ const credentialsLogin = async (payload) => {
         _id: isUserExist._id,
         email: isUserExist.email,
     }
-
-    console.log(env.JWT_ACCESS_SECRET, env.JWT_ACCESS_EXPIRES,
-        env.JWT_REFRESH_SECRET, env.JWT_REFRESH_EXPIRES);
 
     const accessToken = generateToken(userTokenData, env.JWT_ACCESS_SECRET, env.JWT_ACCESS_EXPIRES)
     const refreshToken = generateToken(userTokenData, env.JWT_REFRESH_SECRET, env.JWT_REFRESH_EXPIRES)
