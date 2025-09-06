@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import AppError from "../../errorHelper/AppError.js";
 import { generateToken } from "../../utils/jwt.js";
 import { User } from "../user/user.model.js";
 import bcrypt from "bcryptjs";

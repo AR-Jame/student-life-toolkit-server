@@ -3,10 +3,17 @@ import { router } from './routes/index.js';
 import notFound from './middlewares/notFound.js';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.js';
 import cookieParser from 'cookie-parser';
-
+import cors from "cors"
+import { env } from './config/env.js';
 const app = express();
+
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
+app.use(cors({
+    origin: env.FRONTEND_URL,
+    credentials: true
+}))
+
 app.use("/api/v1", router);
 
 

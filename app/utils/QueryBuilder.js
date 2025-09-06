@@ -17,17 +17,6 @@ export class QueryBuilder {
         return this;
     }
 
-    search(searchAbleFields) {
-        const searchTerm = this.query.searchTerm || "";
-
-        const searchQuery = {
-            $or: searchAbleFields.map(field => ({ [field]: { $regex: searchTerm, $options: "i" } }))
-        };
-
-        this.modelQuery = this.modelQuery.find(searchQuery);
-        return this;
-    }
-
     sort() {
         const sort = this.query.sort || "-createdAt";
         this.modelQuery = this.modelQuery.sort(sort);
@@ -47,6 +36,11 @@ export class QueryBuilder {
 
         this.modelQuery = this.modelQuery.skip(skip).limit(limit);
         return this;
+    }
+
+    populate(fields) {
+        this.modelQuery = this.modelQuery.populate(fields)
+        return this
     }
 
     build() {

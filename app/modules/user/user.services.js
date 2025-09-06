@@ -21,6 +21,13 @@ const createUser = async (payload) => {
     return user
 }
 
+const getMe = async (userId) => {
+    const user = await User.findById(userId);
+    const { password, ...rest } = user.toObject();
+    return rest
+}
+
 export const userServices = {
-    createUser
+    createUser,
+    getMe
 }

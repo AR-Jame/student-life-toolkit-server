@@ -96,6 +96,8 @@ const createSchedule = async (payload, user) => {
         throw new AppError(400, "End time must be after start time.")
     }
 
+    payload.date = new Date(payload?.date)
+
     payload.userId = user._id;
     const schedule = await Schedule.create(payload);
     return schedule
@@ -106,6 +108,7 @@ const getAllSchedule = async (query, user) => {
     const queryBuilder = new QueryBuilder(Schedule.find({ userId: user._id }), query);
     const schedules = queryBuilder
         .filter()
+        .populate("subjectId")
         .sort()
         .paginate()
         .fieldFilter()
