@@ -1,11 +1,12 @@
+import mongoose from "mongoose";
 import AppError from "../../errorHelper/AppError.js";
 import { QueryBuilder } from "../../utils/QueryBuilder.js";
 import { Budget } from "./budget.model.js";
 
 // CREATE - Add new budget entry
 const createBudget = async (payload, user) => {
-    payload.userId = user._id;
-
+    payload.userId = new mongoose.Types.ObjectId(user._id);
+    payload.date = new Date(payload.date).toISOString()
     const data = await Budget.create(payload);
     return data;
 };
@@ -15,8 +16,8 @@ const getAllBudgets = async (user, query) => {
     const entries = queryBuilder
         .filter()
         .sort()
+        .fieldFilter()
         .paginate()
-        .fieldFilter();
 
     const [data, meta] = await Promise.all([
         entries.build(),
@@ -42,17 +43,18 @@ const getBudgetById = async (entryId, user) => {
 
 // READ - Get entries by type (Income/Expense)
 const getBudgetsByType = async (type, user) => {
-    if (!['Income', 'Expense'].includes(type)) {
-        throw new AppError(400, "Invalid type. Must be 'Income' or 'Expense'.");
-    }
 
-    const entries = await Budget.find({
-        userId: user._id,
-        type: type
-    }).sort({ date: -1 });
-
-    return entries;
+    const data = await Budget.aggregate([
+        {
+            $match: { userId: new mongoose.Types.ObjectId(user._id), type: type }
+        },
+        {
+            $group: { _id: "$category", amount: { $sum: "$amount" } }
+        }
+    ])
+    return data;
 };
+
 
 // READ - Get entries by category
 const getBudgetsByCategory = async (category, user) => {
@@ -62,61 +64,65 @@ const getBudgetsByCategory = async (category, user) => {
         category: category
     }).sort({ date: -1 });
 
-    return entries;
 };
 
 // READ - Get budget summary (totals, balance)
-const getBudgetSummary = async (user, options = {}) => {
-    const { startDate, endDate } = options;
-
-    const dateFilter = {};
-
-    if (startDate || endDate) {
-        dateFilter.date = {};
-
-        if (startDate) {
-            const start = new Date(startDate);
-            start.setHours(0, 0, 0, 0);
-            dateFilter.date.$gte = start;
-        }
-
-        if (endDate) {
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-            dateFilter.date.$lte = end;
-        }
+const getBudgetSummary = async (user, query) => {
+    const matchCondition = { userId: new mongoose.Types.ObjectId(user._id) };
+    if (query) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        matchCondition.date = { $gte: thirtyDaysAgo };
     }
 
-    console.log(dateFilter);
-    const entries = await Budget.find({
-        userId: user._id,
-        ...dateFilter
-    });
+    const total = Budget.aggregate([
+        {
+            $match: matchCondition
+        },
+        {
+            $facet: {
+                "byType": [
+                    {
+                        $group: {
+                            _id: "$type",
+                            totalAmount: { $sum: "$amount" }
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 }
+                    }
+                ],
 
-    const summary = entries.reduce((acc, entry) => {
-        if (entry.type === 'Income') {
-            acc.totalIncome += entry.amount;
-        } else {
-            acc.totalExpenses += entry.amount;
+                "byCategory": [
+                    {
+                        $group: {
+                            _id: {
+                                type: "$type",
+                                category: "$category"
+                            },
+                            totalAmount: { $sum: "$amount" }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: "$_id.type",
+                            categories: {
+                                $push: {
+                                    category: "$_id.category",
+                                    amount: "$totalAmount"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 }
+                    }
+                ]
+            }
         }
-        return acc;
-    }, { totalIncome: 0, totalExpenses: 0 });
+    ]);
+    return total
 
-    summary.balance = summary.totalIncome - summary.totalExpenses;
-    summary.entryCount = entries.length;
-
-    // Category breakdown
-    const categoryBreakdown = entries.reduce((acc, entry) => {
-        if (!acc[entry.category]) {
-            acc[entry.category] = { Income: 0, Expense: 0 };
-        }
-        acc[entry.category][entry.type] += entry.amount;
-        return acc;
-    }, {});
-
-    summary.categoryBreakdown = categoryBreakdown;
-
-    return summary;
 };
 
 // UPDATE - Update budget entry

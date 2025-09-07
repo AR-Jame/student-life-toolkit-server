@@ -76,8 +76,8 @@ const getBudgetsByCategory = catchAsync(async (req, res) => {
 // READ - Get budget summary (totals, balance)
 const getBudgetSummary = catchAsync(async (req, res) => {
     const user = req.user;
-    const { startDate, endDate } = req.query;
-    const summary = await budgetServices.getBudgetSummary(user, { startDate, endDate });
+    const query = req.query;
+    const summary = await budgetServices.getBudgetSummary(user, query);
 
     sendResponse(res, {
         statusCode: 200,

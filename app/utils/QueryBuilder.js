@@ -12,7 +12,6 @@ export class QueryBuilder {
         for (const field of excludeFields) {
             delete filter[field];
         }
-
         this.modelQuery = this.modelQuery.find(filter);
         return this;
     }
