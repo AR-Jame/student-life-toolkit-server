@@ -43,12 +43,35 @@ const examAttemptSchema = new Schema({
         enum: ["INIT", "FINISHED"],
         default: "INIT"
     },
+    finishedAt: {
+        type: Date,
+        default: Date.now()
+    },
     // Scoring
     score: {
         type: Number,
         min: 0
     }
-}, { versionKey: false });
+}, { versionKey: false, timestamps: true });
 
+
+const questionBankSchema = new Schema({
+    question: {
+        type: String,
+        required: true
+    },
+    options: [{
+        type: String,
+        required: true
+    }],
+    correctAnswer: {
+        type: Number, // or String, depending on your structure
+        required: true
+    }
+}, {
+    timestamps: true
+});
+
+export const QuestionBank = model("QuestionBank", questionBankSchema);
 
 export const ExamAttempt = model("ExamAttempt", examAttemptSchema)

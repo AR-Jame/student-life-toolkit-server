@@ -44,8 +44,36 @@ const submitExam = catchAsync(async (req, res) => {
 
 })
 
+
+const prevExam = catchAsync(async (req, res) => {
+    const user = req.user;
+    const exam = await examServices.prevExam(user);
+    sendResponse(res, {
+        statusCode: 200,
+        data: exam,
+        message: "Exams retrieved successfully.",
+        success: true
+    })
+
+})
+
+const examDetails = catchAsync(async (req, res) => {
+    const user = req.user;
+    const examId = req.params.examId
+    const exam = await examServices.examDetails(examId, user);
+    sendResponse(res, {
+        statusCode: 200,
+        data: exam,
+        message: "Exam retrieved successfully.",
+        success: true
+    })
+
+})
+
 export const examController = {
     generateExam,
     loadExamQuestion,
-    submitExam
+    submitExam,
+    prevExam,
+    examDetails
 }

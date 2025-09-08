@@ -20,5 +20,15 @@ router.patch('/submit/:examId',
     examController.submitExam
 );
 
+router.get('/',
+    checkAuth(),
+    examController.prevExam
+);
+
+router.get('/:examId',
+    checkAuth(),
+    examController.examDetails
+);
+
 
 export const examRoutes = router;

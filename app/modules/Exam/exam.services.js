@@ -1,15 +1,14 @@
 import mongoose from "mongoose";
-import { ExamAttempt } from "./exam.model.js";
+import { ExamAttempt, QuestionBank } from "./exam.model.js";
 import AppError from "../../errorHelper/AppError.js";
 
 
 const generateExam = async (subject, user) => {
-    const Question = mongoose.connection.db.collection("QuestionBank")
-    const questions = await Question.aggregate([
+    const questions = await QuestionBank.aggregate([
         { $match: { subject: subject } },
         { $sample: { size: 10 } },
         { $project: { _id: 1, correctAnswer: 1 } }
-    ]).toArray();
+    ])
 
     const examAttemptInfo = {
         userId: user._id,
@@ -26,7 +25,6 @@ const generateExam = async (subject, user) => {
 
 
 const loadExamQuestion = async (examId, user) => {
-    const Question = mongoose.connection.db.collection("QuestionBank");
     const examAttempt = await ExamAttempt.findOne({ _id: new mongoose.Types.ObjectId(examId) })
 
 
@@ -40,31 +38,15 @@ const loadExamQuestion = async (examId, user) => {
 
     const questionIds = examAttempt.questions.map(q => q.questionId);
 
-    const questionsFromBank = await Question.find({
+    const questionsFromBank = await QuestionBank.find({
         _id: { $in: questionIds }
-    }).project({ _id: 1, options: 1, question: 1 }).toArray();
+    }).select(" _id options question");
 
     return { _id: examId, questions: questionsFromBank }
 }
 
 const submitExam = async (examId, payload, user) => {
-    // const examAttempt = await ExamAttempt.findById(examId);
 
-    // if (!examAttempt) {
-    //     throw new Error('Exam not found');
-    // }
-
-    // payload.forEach(answer => {
-    //     const questionIndex = examAttempt.questions.findIndex(
-    //         q => q.questionId.toString() === answer.questionId
-    //     );
-
-    //     if (questionIndex !== -1) {
-    //         examAttempt.questions[questionIndex].studentAnswer = answer.selectedOption;
-    //     }
-    // });
-
-    // await examAttempt.save();
     const examAttempt = await ExamAttempt.findById(examId);
 
     if (!examAttempt) {
@@ -98,6 +80,7 @@ const submitExam = async (examId, payload, user) => {
     examAttempt.score = correctCount;
 
     examAttempt.status = 'FINISHED';
+    examAttempt.finishedAt = Date.now()
 
     await examAttempt.save();
 
@@ -111,8 +94,39 @@ const submitExam = async (examId, payload, user) => {
 
 }
 
+const prevExam = async (user) => {
+    const exam = await ExamAttempt.find({ userId: user._id }).select("-questions");
+    return exam
+}
+
+const examDetails = async (examId, user) => {
+    let data = await ExamAttempt.findById(examId)
+        .populate({
+            path: 'questions.questionId',
+            select: 'question options'
+        });
+
+    if (data.userId.toString() !== user._id.toString()) throw new AppError(401, "You can't access this data")
+
+    data = {
+        ...data.toObject(),
+        questions: data.questions.map(q => ({
+            _id: q.questionId._id,
+            question: q.questionId.question,
+            options: q.questionId.options,
+            studentAnswer: q.studentAnswer,
+            isCorrect: q.isCorrect,
+            correctAnswer: q.correctAnswer
+        }))
+    }
+
+    return data;
+}
+
 export const examServices = {
     generateExam,
     loadExamQuestion,
-    submitExam
+    submitExam,
+    prevExam,
+    examDetails
 }
