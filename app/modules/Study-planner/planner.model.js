@@ -109,29 +109,29 @@ const goalSchema = new Schema({
 });
 
 
-// goalSchema.pre('save', function (next) {
-//     let totalTasks = 0;
-//     let completedTasks = 0;
+goalSchema.pre('save', function (next) {
+    let totalTasks = 0;
+    let completedTasks = 0;
 
-//     this.milestones.forEach(milestone => {
-//         totalTasks += milestone.tasks.length;
-//         completedTasks += milestone.tasks.filter(task => task.completed).length;
-//     });
+    this.milestones.forEach(milestone => {
+        totalTasks += milestone.tasks.length;
+        completedTasks += milestone.tasks.filter(task => task.isCompleted).length;
+    });
 
-//     this.totalTasks = totalTasks;
-//     this.completedTasks = completedTasks;
-//     this.progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    this.totalTasks = totalTasks;
+    this.completedTasks = completedTasks;
+    this.progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-//     if (this.progressPercentage === 100) {
-//         this.status = 'Completed';
-//     } else if (this.progressPercentage > 0) {
-//         this.status = 'In Progress';
-//     } else {
-//         this.status = 'Not Started';
-//     }
+    if (this.progressPercentage === 100) {
+        this.status = 'Completed';
+    } else if (this.progressPercentage > 0) {
+        this.status = 'In Progress';
+    } else {
+        this.status = 'Not Started';
+    }
 
-//     next();
-// });
+    next();
+});
 
 
 

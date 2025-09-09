@@ -19,5 +19,15 @@ router.patch("/add-task/:plannerId/:milestoneId",
     plannerController.addTask
 )
 
+router.patch("/toggle-task/:plannerId/:milestoneId/:taskId",
+    checkAuth(),
+    plannerController.toggleTask
+)
+
+router.get('/',
+    checkAuth(),
+    plannerController.getPlanners
+)
+
 
 export const plannerRoutes = router;
